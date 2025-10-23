@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #9caf88 0%, #7a8b6f 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(200, 220, 180, 0.3);
+            padding: 3rem;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(200, 220, 180, 0.4);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .timer-display {
+            font-size: 10rem !important;
+            font-weight: bold;
+            margin: 2rem 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Same as heading */
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            color: white;
+        }
+
+        .status {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+
+        .duration-selector {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .duration-selector label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        #durationSelect {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.5rem 0.8rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            backdrop-filter: blur(5px);
+            cursor: pointer;
+        }
+
+        #durationSelect option {
+            background: #7a8b6f;
+            color: white;
+        }
+
+        #durationSelect:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .goal-input-container {
+            margin-bottom: 1rem;
+        }
+
+        #goalInput {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            width: 300px;
+            max-width: 100%;
+            backdrop-filter: blur(5px);
+            text-align: center;
+        }
+
+        #goalInput::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        #goalInput:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+
+        .current-goal {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+            font-style: italic;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            margin: 2rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            width: 0%;
+            transition: width 1s ease;
+        }
+
+        .work { color: white; font-size: 6rem; font-weight: bold;}
+        .shortBreak { color: orange; font-size: 6rem; font-weight: bold;}
+        .longBreak { color: orangered; font-size: 6rem; font-weight: bold;}
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .timer-display {
+                font-size: 4rem;
+            }
+            
+            .duration-selector {
+                flex-direction: column;
+                gap: 0.3rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍅 Pomodoro Timer</h1>
+        <div class="timer-display" id="timer">25:00</div>
+        <div class="status" id="status">Ready to focus!</div>
+        <div class="duration-selector" id="durationSelector">
+            <label>Work duration:</label>
+            <select id="durationSelect">
+                <option value="25" selected>25 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="45">45 minutes</option>
+                <option value="60">60 minutes</option>
+            </select>
+        </div>
+        <div class="goal-input-container" id="goalInputContainer">
+            <input type="text" id="goalInput" placeholder="What are you working on?" maxlength="50">
+        </div>
+        <div class="current-goal" id="currentGoal" style="display: none;"></div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+        <div class="controls">
+            <button id="startBtn">Start</button>
+            <button id="pauseBtn" disabled>Pause</button>
+            <button id="resetBtn">Reset</button>
+            <button id="skipBtn">Skip</button>
+        </div>
+    </div>
+
+    <script>
+        class PomodoroTimer {
+            constructor() {
+                this.shortBreakTime = 5 * 60; // 5 minutes in seconds
+                this.longBreakTime = 15 * 60; // 15 minutes in seconds
+                
+                // Get initial work duration from select (default 25)
+                this.workTime = parseInt(document.getElementById('durationSelect')?.value || '25') * 60;
+                this.currentTime = this.workTime;
+                this.isRunning = false;
+                this.isPaused = false;
+                this.currentPhase = 'work'; // work, shortBreak, longBreak
+                this.cycleCount = 0;
+                this.timerInterval = null;
+                this.currentGoal = '';
+                
+                this.timerDisplay = document.getElementById('timer');
+                this.statusDisplay = document.getElementById('status');
+                this.progressBar = document.getElementById('progress');
+                this.startBtn = document.getElementById('startBtn');
+                this.pauseBtn = document.getElementById('pauseBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.skipBtn = document.getElementById('skipBtn');
+                this.goalInput = document.getElementById('goalInput');
+                this.goalInputContainer = document.getElementById('goalInputContainer');
+                this.currentGoalDisplay = document.getElementById('currentGoal');
+                this.durationSelect = document.getElementById('durationSelect');
+                
+                this.setupEventListeners();
+                this.updateDisplay();
+            }
+            
+            setupEventListeners() {
+                this.startBtn.addEventListener('click', () => this.start());
+                this.pauseBtn.addEventListener('click', () => this.pause());
+                this.resetBtn.addEventListener('click', () => this.reset());
+                this.skipBtn.addEventListener('click', () => this.skip());
+                
+                this.goalInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.startWithGoal();
+                    }
+                });
+                
+                this.durationSelect.addEventListener('change', () => {
+                    this.updateWorkDuration();
+                });
+            }
+            
+            updateWorkDuration() {
+                const newDuration = parseInt(this.durationSelect.value) * 60;
+                this.workTime = newDuration;
+                
+                // If we're in work phase and not running, update current time
+                if (this.currentPhase === 'work' && !this.isRunning) {
+                    this.currentTime = this.workTime;
+                    this.updateDisplay();
+                }
+            }
+            
+            startWithGoal() {
+                const goal = this.goalInput.value.trim();
+                if (goal) {
+                    this.currentGoal = goal;
+                    this.goalInput.value = '';
+                    this.goalInputContainer.style.display = 'none';
+                    this.currentGoalDisplay.style.display = 'block';
+                    this.start();
+                }
+            }
+
+            start() {
+                if (!this.isRunning) {
+                    // If user clicked Start after typing a goal, capture it
+                    if (this.currentPhase === 'work' && !this.currentGoal) {
+                        const typedGoal = this.goalInput.value.trim();
+                        if (typedGoal) {
+                            this.currentGoal = typedGoal;
+                            this.goalInput.value = '';
+                            this.goalInputContainer.style.display = 'none';
+                        }
+                    }
+
+                    this.isRunning = true;
+                    this.isPaused = false;
+                    this.startBtn.disabled = true;
+                    this.pauseBtn.disabled = false;
+                    
+                    this.timerInterval = setInterval(() => {
+                        this.currentTime--;
+                        this.updateDisplay();
+                        
+                        if (this.currentTime <= 0) {
+                            this.completePhase();
+                        }
+                    }, 1000);
+                }
+            }
+            
+            pause() {
+                if (this.isRunning) {
+                    this.isRunning = false;
+                    this.isPaused = true;
+                    clearInterval(this.timerInterval);
+                    this.startBtn.disabled = false;
+                    this.pauseBtn.disabled = true;
+                }
+            }
+            
+            reset() {
+                this.isRunning = false;
+                this.isPaused = false;
+                clearInterval(this.timerInterval);
+                
+                this.currentPhase = 'work';
+                this.cycleCount = 0;
+                this.currentTime = this.workTime;
+                this.currentGoal = '';
+                
+                this.goalInputContainer.style.display = 'block';
+                this.currentGoalDisplay.style.display = 'none';
+                
+                this.startBtn.disabled = false;
+                this.pauseBtn.disabled = true;
+                this.updateDisplay();
+            }
+            
+            skip() {
+                this.completePhase();
+            }
+            
+            completePhase() {
+                clearInterval(this.timerInterval);
+                this.isRunning = false;
+                this.isPaused = false;
+                
+                // Play notification sound
+                this.playNotification();
+                
+                // Determine next phase
+                if (this.currentPhase === 'work') {
+                    this.cycleCount++;
+                    if (this.cycleCount % 4 === 0) {
+                        this.currentPhase = 'longBreak';
+                        this.currentTime = this.longBreakTime;
+                        this.statusDisplay.textContent = 'Time for a long break!';
+                    } else {
+                        this.currentPhase = 'shortBreak';
+                        this.currentTime = this.shortBreakTime;
+                        this.statusDisplay.textContent = 'Time for a short break!';
+                    }
+                } else {
+                    // Coming from a break -> return to ready state for next work
+                    this.currentPhase = 'work';
+                    this.currentTime = this.workTime;
+                    this.currentGoal = '';
+                    this.goalInputContainer.style.display = 'block';
+                    this.statusDisplay.textContent = 'Ready to focus!';
+                }
+                
+                this.startBtn.disabled = false;
+                this.pauseBtn.disabled = true;
+                this.updateDisplay();
+            }
+            
+            updateDisplay() {
+                const minutes = Math.floor(this.currentTime / 60);
+                const seconds = this.currentTime % 60;
+                this.timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Update status
+                if (!this.isRunning && !this.isPaused) {
+                    if (this.currentPhase === 'work') {
+                        this.statusDisplay.textContent = 'Ready to focus!';
+                        this.durationSelect.parentElement.style.display = 'flex';
+                    } else if (this.currentPhase === 'shortBreak') {
+                        this.statusDisplay.textContent = 'Short break time';
+                        this.durationSelect.parentElement.style.display = 'none';
+                    } else {
+                        this.statusDisplay.textContent = 'Long break time';
+                        this.durationSelect.parentElement.style.display = 'none';
+                    }
+                } else if (this.isRunning) {
+                    if (this.currentPhase === 'work') {
+                        this.statusDisplay.textContent = this.currentGoal ? `Working on: ${this.currentGoal}` : 'Focus time!';
+                        this.durationSelect.parentElement.style.display = 'none';
+                    } else if (this.currentPhase === 'shortBreak') {
+                        this.statusDisplay.textContent = 'Short break';
+                        this.durationSelect.parentElement.style.display = 'none';
+                    } else {
+                        this.statusDisplay.textContent = 'Long break';
+                        this.durationSelect.parentElement.style.display = 'none';
+                    }
+                }
+                
+                // Hide current goal display since we're showing it in status now
+                this.currentGoalDisplay.style.display = 'none';
+                
+                // Update progress bar
+                let totalTime, progress;
+                if (this.currentPhase === 'work') {
+                    totalTime = this.workTime;
+                    progress = ((this.workTime - this.currentTime) / this.workTime) * 100;
+                } else if (this.currentPhase === 'shortBreak') {
+                    totalTime = this.shortBreakTime;
+                    progress = ((this.shortBreakTime - this.currentTime) / this.shortBreakTime) * 100;
+                } else {
+                    totalTime = this.longBreakTime;
+                    progress = ((this.longBreakTime - this.currentTime) / this.longBreakTime) * 100;
+                }
+                
+                this.progressBar.style.width = `${progress}%`;
+                
+                // Update colors based on phase
+                this.timerDisplay.className = this.currentPhase;
+            }
+            
+            playNotification() {
+                // Create a simple beep sound using Web Audio API
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            }
+        }
+        
+        // Initialize the timer when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new PomodoroTimer();
+        });
+    </script>
+</body>
+</html>
